@@ -8,7 +8,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-7">
-                        <div class="input-group input-group-mds">
+                        <div class="input-group input-group-mds"  :class="{danger: insufficientFunds}">
                             <div class="input-group-prepend">
                                 <span class="input-group-text" id="inputGroup-sizing-md">#</span>
                             </div>
@@ -16,7 +16,7 @@
                         </div>
                     </div>
                     <div class="col-5">
-                        <button class="btn btn-primary" @click="buyStock" :disabled="quantity <= 0">Buy</button>    
+                        <button class="btn btn-primary" @click="buyStock" :disabled="insufficientFunds || quantity <= 0">{{ insufficientFunds ? 'Insufficient Funds' : 'Buy'}}</button>    
                     </div>
                 </div>
             </div>
@@ -24,22 +24,42 @@
     </div>
 </template>
 
+<style scoped>
+    .danger {
+        border: 1px solid red;
+    }
+</style>
+
+
 <script>
+import { mapMutations } from 'vuex';
 export default {
     data() {
         return {
             quantity: 0
         };
     },
+    computed: {
+      funds() {
+        return this.$store.getters.funds;
+      },
+      insufficientFunds() {
+        return this.quantity * this.stock.price > this.funds;
+      },
+      border() {
+          return this.insufficientFunds ? 'border-danger' : '';
+      }
+    },
     props: ['stock'],
     methods: {
+        ...mapMutations(['spendMoney']),
         buyStock() {
             const order = {
                 stockId: this.stock.id,
                 stockPrice: this.stock.price,
                 quantity: this.quantity
             };
-            console.log(order);
+            this.$store.dispatch('buyStock', order)
             this.quantity = 0;
         }
     }
